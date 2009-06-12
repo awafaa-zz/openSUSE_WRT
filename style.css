@@ -1,0 +1,53 @@
+/* Feed item date */
+.FeedItemDate {
+    font-style: italic;
+}
+
+/* Feed item text */
+.FeedItemDescription {
+    padding: 4px 0px;
+}
+
+/* Feed item links */
+.FeedItemLink {
+    font-weight: bold;
+}
+
+/* Anchor tags in the context of a feed item link */
+.FeedItemLink a {
+    text-decoration: underline;
+    font-weight: bold;
+    color: rgb(0,0,0);
+}
+
+/* Focused anchor tags */
+.FeedItemLink a:focus {
+    background: rgb(253,200,47);
+    color: rgb(0,0,0);
+}
+
+table.bugzilla {
+    font: normal 12px Arial, sans-serif;
+	border-width: thin thin thin thin;
+	border-spacing: 0px;
+	border-style: none none none none;
+	border-color: black black black black;
+	border-collapse: collapse;
+	background-color: white;
+}
+table.bugzilla th {
+    font: normal 12px Arial, sans-serif;
+	border-width: thin thin thin thin;
+	padding: 1px 1px 1px 1px;
+	border-style: inset inset inset inset;
+	border-color: gray gray gray gray;
+	background-color: white;
+}
+table.bugzilla td {
+    font: normal 12px Arial, sans-serif;
+	border-width: thin thin thin thin;
+	padding: 1px 1px 1px 1px;
+	border-style: inset inset inset inset;
+	border-color: gray gray gray gray;
+	background-color: white;
+}
