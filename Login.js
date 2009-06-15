@@ -1,12 +1,15 @@
+// ////////////////////////////////////////////////////////////////////////////
+// (c)2009 Symbian Foundation, Andrew Wafaa
+// ////////////////////////////////////////////////////////////////////////////
 
 
-
-// Login to the developer site
+// Login to openSUSE
 
 var loginUrlContent = null;
 var loginUrlHttpReq = null;
 var loginCallback = null;
 
+var isHideNotifications = true;
 function login(callback){
 	if ( forumUsername == null || forumPassword == null ) {
 		loginInitiated = true;
@@ -56,11 +59,15 @@ function loginComplete(){
 				promptForPassword();
 			}
 			else {
-				uiManager.hideNotification();
 				if (loginCallback != null) {
 					loginCallback.call();
 				}
-				checkForSecurityToken("loginComplete", content);
+				// ensure we have all the cookies we need
+				var vbCookieGet = new Ajax();
+				var vburl = forumBaseUrl;
+			    vbCookieGet.onreadystatechange = forumCookieHarvestComplete;
+				vbCookieGet.open('GET', vburl, true);
+				vbCookieGet.send(null);
 			}
 		} else if (responseStatus < 400) {
 			// do nothing, this must be a redirect
@@ -72,3 +79,9 @@ function loginComplete(){
     }
 }
 
+function forumCookieHarvestComplete () {
+	if (isHideNotifications) {
+		uiManager.hideNotification();
+	}
+	isHideNotifications = true;
+}

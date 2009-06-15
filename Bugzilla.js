@@ -1,3 +1,7 @@
+// ////////////////////////////////////////////////////////////////////////////
+// (c)2009 Symbian Foundation, Andrew Wafaa
+// ////////////////////////////////////////////////////////////////////////////
+
 
 
 var bugzillaTableStyle = "bugzilla";
@@ -34,7 +38,7 @@ BugzillaSearchPanel.prototype.bugzillaSearchClicked = function() {
 	// create the RssReader for bugzilla
 	var searchString = this.searchTerm.getText();
 	var title = "Bugzilla: " + searchString;
-	var url = "https://bugzilla.novell.com/index.cgi"
+	var url = "https.bugzilla.novell.com"
 		+ "bug_status=NEW&bug_status=ASSIGNED&bug_status=UNCONFIRMED"
 		+ "&field-1-0-0=bug_status&field0-0-0=product&field0-0-1=component&field0-0-2=short_desc"
 		+ "&field0-0-3=status_whiteboard&field0-0-4=longdesc"
@@ -96,7 +100,7 @@ function parseBugzillaFeed(broker, responseStatus, xmlDoc) {
 						var ind = url.indexOf("?id=");
 						if ( ind != -1 ) {
 							bugid = url.substring(ind + 4);
-							url = symbianOrgBaseUrl + "/bugtracker/show_bug.cgi?ctype=xml&id="+bugid;
+							url = bugzillaBaseUrl + "/show_bug.cgi?ctype=xml&id="+bugid;
 						}
                     } else if (node.nodeName == "author" ) {
 						author = getTextOfNode(node);

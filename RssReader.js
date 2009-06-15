@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// RSS Reader from WRTKit examples, modified for Symbian.org
+// RSS Reader from WRTKit examples, modified for openSUSE.org
 
 // RSS reader class
 
@@ -59,7 +59,7 @@ RssReader.prototype.feedUpdateCompleted = function(event){
 	}
 	else if (event.status != "cancelled") {
 		// show error message
-		uiManager.showNotification(3000, "warning", "Error while updating feed!<br/>(check network settings)");
+		uiManager.showNotification(3000, "warning", "Error while updating feed!");
 	}
 	
 	// reset the broker 

@@ -1,5 +1,5 @@
 // ////////////////////////////////////////////////////////////////////////////
-// (c)2009 Symbian Foundation
+// (c)2009 Symbian Foundation, Andrew Wafaa
 // ////////////////////////////////////////////////////////////////////////////
 
 // Forums
@@ -332,7 +332,7 @@ ThreadFeedPresenter.prototype.show = function(item) {
 
 	// initialize feed item control
 	var title = item.title;
-	if ( title.length == 0 ) { 
+	if ( !title || title.length == 0 ) { 
 		title = "Re:";
 		item.title = title;
 	}
@@ -410,12 +410,6 @@ LatestPostsFeedPresenter.prototype.addPreambleItems = function(){
 // Utilities
 
 
-// feeds contain bbcodes - this function should turn the bbcode markup
-// to HTML
-function bbcode2html(s) {
-	return sanitize(s);
-}
-
 // Forum posts can be be quite messy and include bbcodes, smilies etc.
 // This function does the minimum by stripping bbcodes and such
 function sanitize(text) {
@@ -441,3 +435,59 @@ function sanitize(text) {
 
 
 
+// feeds contain bbcodes - this function should turn the bbcode markup
+// to HTML
+function bbcode2html(s) {
+	var prevind = 0;
+	var buf = "";
+	var ind = s.indexOf("[");
+	if ( ind == -1 ) return s;
+	while ( ind != -1 ) {
+		buf += s.substring(prevind, ind);
+		var ind2 = s.indexOf("]", ind); // end of tag
+		var fulltag = s.substring(ind+1,ind2);
+		var tag = fulltag;
+		var ind3 = s.indexOf("=", ind); // end of tag name, eg. [URL=http...]
+		if ( ind3 != -1 && ind3 < ind2) {
+			tag = s.substring(ind+1,ind3);
+		} 
+		var ind4 = s.indexOf("[/"+tag+"]");
+		var tagContent = s.substring(ind2+1, ind4);
+		buf += convertTag(tag, fulltag, tagContent);
+		if ( ind4 != -1 ) {
+			prevind = s.indexOf(']',ind4) + 1;
+		} else {
+			break;
+		}
+		ind = s.indexOf("[", prevind);
+	}
+	buf += s.substring(prevind);
+	return buf;
+}
+
+function convertTag(tag, fulltag, tagContent) {
+	tag = tag.toLowerCase();
+	switch(tag) {
+		case 'b':case 'i':case 'u':case 's':case 'sup':case 'sub':case 'h1':case 'h2':case 'h3':case 'h4':case 'h5':case 'h6':case 'table':case 'tr':case 'th':case 'td':
+		{
+			return '<' + tag + '>' + tagContent + "</" + tag + ">";
+		}
+		case 'quote': return '<blockquote><i>' + tagContent + '</i></blockquote>';
+		case 'url': {
+			var eqsign = fulltag.indexOf("=");
+			if ( eqsign > -1 ) {
+				return '<div class="FeedItemLink"><a href="JavaScript:void(0)" onclick="openURL( ' 
+				+ fulltag.substring(eqsign+1)
+				+ '") ><i>'
+				+ tagContent
+				+ '</i></a></div>'; 
+			} else {
+				return '<div class="FeedItemLink"><a href="JavaScript:void(0)" onclick="openURL( ' 
+				+ tagContent
+				+ '") ><i>'
+				+ tagContent
+				+ '</i></a></div>'; 
+			}
+		}
+	}
+}

@@ -4,7 +4,7 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// A widget for accessing openSUSE.org online resources
+// A widget for accessing developer.symbian.org forums
 
 
 // Reference to the WRTKit user interface manager and main view.
@@ -14,23 +14,24 @@ var uiManager;
 
 // openSUSE.org web site base URL
 var opensuseOrgBaseUrl = "http://en.opensuse.org";
-var opensuseOrgBaseUrlSsl = "https://en.opensuse.org.org";
+//var symbianOrgBaseUrlSsl = "https://en.opensuse.org";
 var registrationURL = "https://secure-www.novell.com/selfreg/jsp/createOpenSuseAccount.jsp?target=http://www.opensuse.org";
 var blogFeedName = "Planet SUSE";
 var blogFeedUrl = "http://planet.opensu.se/rss20.xml";
+var bugzillaBaseUrl = "https://bugzilla.novell.com";
 
 // FORUM vars and settings 
 var forumBaseUrl = "http://forums.opensuse.org";
-var opensuseOrgNewThreadUrl = forumBaseUrl+"/newthread.php?";
+opensuseOrgNewThreadUrl = forumBaseUrl+"/newthread.php?";
 var forumOrgNewReplyUrl = forumBaseUrl+"/newreply.php?";
-var opensuseOrgLoginUrl = "https://forums.opensuse.org/ICSLogin/?%22http://forums.opensuse.org/login/icslogin.php?destination=/%22";
+var opensuseOrgLoginUrl = "http://en.opensuse.org/index.php?title=Special:Userlogin&returnto=Main_Page&action=submitlogin";
 var opensuseOrgLoginUsernameField = "username";
 var opensuseOrgLoginPasswordField = "password";
 var forumUsername = null	;
 var forumPassword = null;
 
 // Feed name, URL etc for forums
-var forumFeedName = "openSUSE.org Forums";
+var forumFeedName = "openSUSE Forums";
 var forumFeedURL = forumBaseUrl+ "/external.php?type=RSS2"; //&fulldesc=1&lastpost=1
 var forumsForumSpecQuery = "&forumid=";
 var forumFeedUpdateFrequency = -1;
@@ -44,15 +45,15 @@ var openfateFeedName = "openFATE feature changes";
 var openfateFeedUrl = "https://hermes.opensuse.org/feeds/25544.rdf";
 
 // Wiki url etc
-var wikiFeedName = "New on openSUSE.org Wiki";
+var wikiFeedName = "New on the openSUSE Wiki";
 var wikiFeedUrl = opensuseOrgBaseUrl+"/Special:NewPages&feed=rss";
 var wikiBaseUrl = opensuseOrgBaseUrl;
 
 // Update variables
-var myversion = "0.1";
+var myversion = "0.2";
 var versionWikiPageUrl = wikiBaseUrl + "/User:FunkyPenguin/SymbianWidget";
 var versionWikiPageString = "Current widget version is [";
-var downloadUrl = "http://www.wafaa.eu/Uploads/SUSE/openSUSE.org.wgz";
+var downloadUrl = "http://www.wafaa.eu/uploads/openSUSE.org.wgz";
 
 // UI elements
 
@@ -60,8 +61,8 @@ var downloadUrl = "http://www.wafaa.eu/Uploads/SUSE/openSUSE.org.wgz";
 // all are SOScreen subclasses
 var home;   // home screen
 var blog;   // RSSReader showing blog
-var openfate;   // RSSReader showing openfate
 var wiki;   // RSSReader showing wiki
+var openfate;   // RSSReader showing openfate
 var bugzila; // RSSReader showing bugzilla feeds
 var forumGroups; // RSSReader showing list of forum groups
 var settings;
@@ -79,6 +80,8 @@ var MENU_ITEM_SETTINGS = 0;
 var MENU_ITEM_REFRESH = 1;
 var MENU_ITEM_ABOUT = 2;
 var MENU_ITEM_CHECK_UPDATE = 3;
+var MENU_ITEM_LARGER_FONT = 4;
+var MENU_ITEM_SMALLER_FONT = 5;
 
 // Flag indicating weather the web site login has been initiated
 var loginInitiated = false;
@@ -97,6 +100,9 @@ var aboutText = "<strong>openSUSE.org "+myversion+"</strong><br>"
 				+ "Credits: Andrew Wafaa, Ivan Litovski, Ryan Grentz, James Mentz";
 
 
+var currentFontSize = 14;
+
+
 // Called from the onload event handler to initialize the widget.
 function init() {
 	
@@ -106,18 +112,24 @@ function init() {
         widget.setNavigationEnabled(false);
         window.menu.showSoftkeys();
         // create menu
-        var settingsMenuItem = new MenuItem("Settings", MENU_ITEM_SETTINGS);
-        settingsMenuItem.onSelect = menuItemSelected;
-        menu.append(settingsMenuItem);
         var refreshMenuItem = new MenuItem("Refresh", MENU_ITEM_REFRESH);
         refreshMenuItem.onSelect = menuItemSelected;
         menu.append(refreshMenuItem);
-		var aboutMenuItem = new MenuItem("About", MENU_ITEM_ABOUT);
-		aboutMenuItem.onSelect = menuItemSelected;
-		menu.append(aboutMenuItem);
+        var settingsMenuItem = new MenuItem("Settings", MENU_ITEM_SETTINGS);
+        settingsMenuItem.onSelect = menuItemSelected;
+        menu.append(settingsMenuItem);
 		var updateMenuItem = new MenuItem("Check for updates", MENU_ITEM_CHECK_UPDATE);
 		updateMenuItem.onSelect = menuItemSelected;
 		menu.append(updateMenuItem);
+		var largerFontMenuItem = new MenuItem("Larger font", MENU_ITEM_LARGER_FONT);
+		largerFontMenuItem.onSelect = menuItemSelected;
+		menu.append(largerFontMenuItem);
+		var smallerFontMenuItem = new MenuItem("Smaller font", MENU_ITEM_SMALLER_FONT);
+		smallerFontMenuItem.onSelect = menuItemSelected;
+		menu.append(smallerFontMenuItem);
+		var aboutMenuItem = new MenuItem("About", MENU_ITEM_ABOUT);
+		aboutMenuItem.onSelect = menuItemSelected;
+		menu.append(aboutMenuItem);
     }
 
     // load prefs 
@@ -145,7 +157,7 @@ function init() {
 	var openfateButton = new NavigationButton(2, "right.gif", "openFATE")
 	openfateButton.addEventListener("ActionPerformed", function(){openfate.show();});
 	home.addControl(openfateButton);
-
+	
 	// add wiki button
 	var wikiButton = new NavigationButton(3, "right.gif", "Wiki")
 	wikiButton.addEventListener("ActionPerformed", function(){wiki.show();});
@@ -168,8 +180,7 @@ function init() {
 	
 	// create openfate screen
 	openfate = new RssReader(openfateFeedName, openfateFeedUrl, null, home, null);
-
-	
+		
 	// create wiki screen
 	wiki = new RssReader(wikiFeedName, wikiFeedUrl, new ButtonFeedPresenter(null), home, null);
 	
@@ -197,11 +208,11 @@ function init() {
 		
 	settings.addControl(settingsIntroLabel);
     // forum username control
-    forumUsernameControl = new TextField('forumUsername', "openSUSE.org username", forumUsername?forumUsername:"");
+    forumUsernameControl = new TextField('forumUsername', "openSUSE username", forumUsername?forumUsername:"");
     settings.addControl(forumUsernameControl);
 	
     // forum password control
-    forumPasswordControl = new TextField('forumPassword', "openSUSE.org password", forumPassword?forumPassword:"", true);
+    forumPasswordControl = new TextField('forumPassword', "openSUSE password", forumPassword?forumPassword:"", true);
     settings.addControl(forumPasswordControl);
 
     // save settings button
@@ -231,6 +242,7 @@ function init() {
 	about.addControl(aboutLabel);
 
 	home.show();
+	setDefaultFontSizeForScreenSize();
 	login(null);	
 }
 
@@ -249,6 +261,12 @@ function menuItemSelected(id) {
             break;
         case MENU_ITEM_REFRESH:
             currentView.update(true);
+            break;
+        case MENU_ITEM_LARGER_FONT:
+            increaseFontSize();
+            break;
+        case MENU_ITEM_SMALLER_FONT:
+            decreaseFontSize();
             break;
         case MENU_ITEM_CHECK_UPDATE:
             checkForUpdates();
@@ -314,7 +332,7 @@ function checkForUpdates() {
 	uiManager.showNotification(-1, "wait", "Checking for updates...", -1);
 	updatePageAjax = new Ajax();
 	updatePageAjax.onreadystatechange = checkForUpdatesStage2;
-	updatePageAjax.open('GET', versionWikiPageUrl, true);
+	updatePageAjax.open('GET', nocache(versionWikiPageUrl), true);
 	updatePageAjax.send(null);	
 }
 
@@ -340,7 +358,8 @@ function checkForUpdatesStage2() {
 			if (answer) {
 				// ok, we have the update
 				uiManager.hideNotification();
-				openURL(downloadUrl);
+				openURL(nocache(downloadUrl));
+				setTimeout(function () {window.close();}, 1000);
 			} else {
 			uiManager.showNotification(3000, "info", "Update cancelled.");
 			}
@@ -354,8 +373,62 @@ function createCaption(caption) {
 	if (caption.length > 30) {
 		caption = caption.substring(0, 30) + "...";
 	}
-	return  "<table border=0>"
-		+ "<tr><td><img src=titlebar.png style=\"{vertical-align:middle}\" > </td></td><td>" 
-		+ "<p class=ListViewCaptionText>"+ caption +"</p>"
-		+ "</td></tr></table>";
+	return  "<table border=0><tr><td style=\"{vertical-align:middle}\">"
+		+ "<img src=titlebar.png style=\"{vertical-align:middle}\" >"
+		+ "</td><td style=\"{vertical-align:middle}\"> " 
+		+ "<p class=ListViewCaptionText>" + caption +"</p></td></tr></table>";
+}
+
+function setDefaultFontSizeForScreenSize(){
+	// first check if there is a preference present
+    if (window.widget) {
+		var saved = widget.preferenceForKey("fontsize");
+		if ( widget.preferenceForKey("fontsize") ) {
+			setCssBodyFontSize(parseInt(saved));
+		}
+		else {
+			// no preference available, check screen size
+			if (window.screen.width > 400 || window.screen.height > 400) {
+				// hi res screen, use large font
+				setCssBodyFontSize(18);
+			}
+			else {
+				// lo res screen, use small font
+				setCssBodyFontSize(14);
+			}
+		}
+	}
+}
+
+function increaseFontSize(){
+    if (window.widget) {
+		setCssBodyFontSize(currentFontSize + 2);
+	}
+}
+
+function decreaseFontSize(){
+    if (window.widget) {
+		if (currentFontSize > 4) {
+			setCssBodyFontSize(currentFontSize - 2);
+		}
+	}
+}
+
+function setCssBodyFontSize(size) {
+    if (window.widget) {
+		currentFontSize = size;
+		var sizestring = "" + size;
+		document.body.style.fontSize = sizestring + "px";
+		widget.setPreferenceForKey(sizestring, "fontsize");
+	}
+}
+
+function nocache(url) {
+    if (url.indexOf("?") == -1) {
+        url += "?";
+    } else {
+        url += "&";
+    }
+    url += "nocache=" + (new Date().getTime());
+	return url;
 }

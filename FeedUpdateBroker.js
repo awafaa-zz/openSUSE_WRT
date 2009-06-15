@@ -24,16 +24,8 @@ FeedUpdateBroker.prototype.doFetchFeed = function(){
     var self = this;
     this.httpReq.onreadystatechange = function() { self.readyStateChanged(); };
 
-	var fullURL = this.feedAddress;
-    if (fullURL.indexOf("?") == -1) {
-        fullURL += "?";
-    } else {
-        fullURL += "&";
-    }
-    fullURL += "nocache=" + (new Date().getTime());
-
     // initiate the request
-    this.httpReq.open("GET", fullURL, true);
+    this.httpReq.open("GET", nocache(this.feedAddress), true);
     this.httpReq.send(null);
 }
 
@@ -174,7 +166,7 @@ function getTextOfNode(node) {
             if (buf != "") {
                 buf += " ";
             }
-            buf += child.nodeValue;
+            buf += escapeLtGt(child.nodeValue);
         }
         child = child.nextSibling;
     }
@@ -183,7 +175,8 @@ function getTextOfNode(node) {
     var strippedBuf = "";
     var textStartPos = -1;
     var tagBalance = 0;
-    
+	
+    var pos;
     // iterate through the text and append all text to the stripped buffer
     // that is at a tag balance of 0
     for (pos = 0; pos < buf.length; pos++) {
@@ -217,4 +210,10 @@ function getTextOfNode(node) {
 FeedUpdateBroker.prototype.cancel = function() {
 	this.cancelled = true;
 	this.httpReq.abort();
+}
+
+function escapeLtGt(text){
+	var lt = "&lt;";
+	var gt = "&gt;";
+	return text.replace(/</g, lt).replace(/>/g, gt);
 }

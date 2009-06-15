@@ -1,8 +1,8 @@
+// ////////////////////////////////////////////////////////////////////////////
+// (c)2009 Symbian Foundation, Andrew Wafaa
+// ////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
+var allowRetry = true;
 function ForumPostForm(aParentView, forumid) {
 	ListView.prototype.init.call(this, null, null);
 	this.previousView = aParentView;
@@ -26,6 +26,7 @@ function ForumPostForm(aParentView, forumid) {
     // post button
     this.postButton = new FormButton(null, "Submit");
     this.postButton.addEventListener("ActionPerformed", function(){
+		isHideNotifications = false;
 		login( function(){
 			submitNewTopic(
 				self.topicNameTf.getText(), // title
@@ -72,6 +73,7 @@ function ForumReplyForm(aParentView, threadid, postid, parentTitle) {
     // post button
     this.postButton = new FormButton(null, "Submit");
     this.postButton.addEventListener("ActionPerformed", function(){
+		isHideNotifications = false;
 		login(
 		function(){
 			submitNewReply(self.topicNameTf.getText(), // title
@@ -117,12 +119,13 @@ var reply = false;
 // Initiates the submission process by requesting the form
 function submitNewTopic(title, content, forumid, callback){
 	uiManager.showNotification(-1, "wait", "Submitting...", -1);
+	isHideNotifications = false;
 
 	// Dealing with vBulletin nastiness...
 	
 	// ensure we have all the cookies we need
 	var vbCookieGet = new Ajax();
-	var vburl = symbianOrgBaseUrl + "/forum/";
+	var vburl = forumBaseUrl;
 	vbCookieGet.open('GET', vburl, false);
 	vbCookieGet.send(null);
 
@@ -138,7 +141,7 @@ function submitNewTopic(title, content, forumid, callback){
     submitUrlHttpReq.onreadystatechange = submitFormReady;
 	reply = false;
 	
-	var url = symbianOrgBaseUrl + "/forum/newthread.php?do=newthread&f=" + forumid;
+	var url = forumBaseUrl + "/newthread.php?do=newthread&f=" + forumid;
 	submitUrlHttpReq.open('GET', url, true);
 	submitUrlHttpReq.send(null);
 }
@@ -146,12 +149,13 @@ function submitNewTopic(title, content, forumid, callback){
 // Initiates the submission process by requesting the form
 function submitNewReply(title, content, threadid, postid, callback){
 	uiManager.showNotification(-1, "wait", "Submitting...", -1);
+	isHideNotifications = false;
 	
 	// Dealing with vBulletin nastiness...
 	
 	// ensure we have all the cookies we need
 	var vbCookieGet = new Ajax();
-	var vburl = symbianOrgBaseUrl + "/forum/";
+	var vburl = forumBaseUrl;
 	vbCookieGet.open('GET', vburl, false);
 	vbCookieGet.send(null);
 
@@ -167,7 +171,7 @@ function submitNewReply(title, content, threadid, postid, callback){
     submitUrlHttpReq.onreadystatechange = submitFormReady;
 	reply = true;
 	
-	var url = symbianOrgBaseUrl + "/forum/newreply.php?do=newreply&noquote=1&p=" + postid;
+	var url = forumBaseUrl + "/newreply.php?do=newreply&noquote=1&p=" + postid;
 	submitUrlHttpReq.open('GET', url, true);
 	submitUrlHttpReq.send(null);
 }
@@ -181,6 +185,7 @@ var forumPostHarvestString_securitytoken = "name=\"securitytoken\" value=\"";
 // Form has been received, extract important info
 function submitFormReady(){
 	uiManager.showNotification(-1, "wait", "Submitting...", -1);
+	isHideNotifications = false;
     if (submitUrlHttpReq.readyState == 4) {
         // attempt to get response status
         var responseStatus = null;
@@ -204,22 +209,30 @@ function submitFormReady(){
 			forumPostSecurityToken = extractFormField(content, forumPostHarvestString_securitytoken);
 			
 			if (forumPostSecurityToken == null || forumPostSecurityToken.length < 5) {
-			    // workaround for a vBulletin bug, restart the process...
-				login( function(){
-					if (reply) {
-						submitNewReply(submitTitle, // title
-						 submitContent, // message
-						 submitThreadId, // threadid
-						 submitPostId, // threadid
-						 submitCallback);
-					}
-					else {
-						submitNewTopic(submitTitle, // title
+				if (!allowRetry) {
+					uiManager.showNotification(3000, "warning", "Failed, please try again...");
+				}
+				else {
+				    // workaround for a vBulletin bug, restart the process...
+					isHideNotifications = true;
+					login( function(){
+						if (reply) {
+							submitNewReply(submitTitle, // title
 							 submitContent, // message
-							 submitForumId, // forumid
+							 submitThreadId, // threadid
+							 submitPostId, // threadid
 							 submitCallback);
-					}
-				});
+						}
+						else {
+							submitNewTopic(submitTitle, // title
+								 submitContent, // message
+								 submitForumId, // forumid
+								 submitCallback);
+						}
+					});
+					// avoid loop
+					allowRetry = false;
+				}
 			} else {
 				doSubmitPost(submitTitle, submitContent, submitForumId, submitCallback, forumPostSecurityToken, forumPostHash, forumPostStartTime, forumPostLoggedInUser);
 			}
@@ -231,12 +244,13 @@ function submitFormReady(){
 function doSubmitPost(title, message, forumid, callback, 
 			forumPostSecurityToken, forumPostHash, forumPostStartTime, forumPostLoggedInUser){
 	uiManager.showNotification(-1, "wait", "Submitting...", -1);
+	isHideNotifications = false;
 	var url = null;
 	var parameters = null;
 	
 	if (reply) {
 		// posting a reply to an article
-		url = symbianOrgNewReplyUrl + "do=postreply&t=" + submitThreadId;
+		url = opensuseOrgNewReplyUrl + "do=postreply&t=" + submitThreadId;
 		parameters = "title=" + title + "&message=" + message +
 		"&wysiwyg=0&iconid=0&s=&securitytoken=" + forumPostSecurityToken +
 		"&do=postreply" +
@@ -248,7 +262,7 @@ function doSubmitPost(title, message, forumid, callback,
 		"&multiquoteempty=&sbutton=Submit+Reply&parseurl=1&emailupdate=9999&rating=0";
 	} else {
 		// posting a new thread
-		url = symbianOrgNewThreadUrl + "do=postthread&f=" + forumid;
+		url = opensuseOrgNewThreadUrl + "do=postthread&f=" + forumid;
 		parameters = "do=postthread&f=" + forumid + "&subject=" + title + "&message=" + message +
 		"&wysiwyg=0&taglist=&iconid=0&s=&securitytoken=" + forumPostSecurityToken +
 		"&posthash" + forumPostHash +
@@ -293,7 +307,7 @@ function submitComplete(){
 // being able to tell weather a login has been successfull, or if
 // we received login prompt instead of XML at any point.
 function isLoginPrompt (text) {
-	return text.indexOf("form name=\"frmLogin\"") != -1;
+	return text.indexOf("<title>Sign in</title>") != -1;
 }
 
 // Stores the current view, then shows the settings dialog
